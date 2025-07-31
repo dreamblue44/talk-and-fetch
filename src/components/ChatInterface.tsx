@@ -172,20 +172,21 @@ export const ChatInterface = () => {
           currentMode={currentMode}
           currentChatId={currentChatId}
           chatSessions={chatSessions}
-          onModeChange={handleModeChange}
           onChatSelect={handleChatSelect}
           onNewChat={handleNewChat}
           onDeleteChat={handleDeleteChat}
         />
         
-        <main className="flex-1 flex flex-col">
-          {/* Header with trigger */}
-          <div className="h-12 flex items-center border-b border-border bg-background/95 backdrop-blur">
-            <SidebarTrigger className="ml-2" />
-            <div className="ml-4">
-              <h1 className="text-lg font-medium">
-                {currentChat?.name || `${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} Chat`}
-              </h1>
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* Header with mode selector */}
+          <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="h-12 flex items-center px-4">
+              <SidebarTrigger className="mr-4" />
+              <ModeSelector
+                currentMode={currentMode}
+                onModeChange={handleModeChange}
+                onSettingsClick={() => setShowSettings(true)}
+              />
             </div>
           </div>
           

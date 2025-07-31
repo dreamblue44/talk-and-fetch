@@ -29,7 +29,6 @@ interface AppSidebarProps {
   currentMode: ChatMode;
   currentChatId: string | null;
   chatSessions: ChatSession[];
-  onModeChange: (mode: ChatMode) => void;
   onChatSelect: (chatId: string) => void;
   onNewChat: () => void;
   onDeleteChat: (chatId: string) => void;
@@ -39,34 +38,12 @@ export function AppSidebar({
   currentMode,
   currentChatId,
   chatSessions,
-  onModeChange,
   onChatSelect,
   onNewChat,
   onDeleteChat,
 }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-
-  const modes = [
-    {
-      id: "database" as ChatMode,
-      label: "Database",
-      icon: Database,
-      description: "Search client database"
-    },
-    {
-      id: "web" as ChatMode,
-      label: "Web Search",
-      icon: Globe,
-      description: "Search the internet"
-    },
-    {
-      id: "email" as ChatMode,
-      label: "Email",
-      icon: Mail,
-      description: "Send emails"
-    }
-  ];
 
   const currentModeSessions = chatSessions.filter(session => session.mode === currentMode);
 
@@ -76,10 +53,7 @@ export function AppSidebar({
 
   return (
     <Sidebar
-      className={cn(
-        "border-r border-border transition-all duration-200",
-        collapsed ? "w-16" : "w-80"
-      )}
+      className="border-r border-border bg-background"
       collapsible="icon"
     >
       <SidebarContent className="bg-background">
@@ -87,43 +61,18 @@ export function AppSidebar({
         <div className="p-3 border-b border-border">
           <Button
             onClick={onNewChat}
-            className="w-full justify-start gap-2 bg-transparent border border-border hover:bg-muted"
-            variant="outline"
+            className="w-full justify-start gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            size="sm"
           >
             <Plus className="h-4 w-4" />
             {!collapsed && "New Chat"}
           </Button>
         </div>
 
-        {/* Mode Selector */}
-        <div className="p-3 border-b border-border">
-          <div className="space-y-1">
-            {modes.map((mode) => {
-              const Icon = mode.icon;
-              const isActive = currentMode === mode.id;
-              
-              return (
-                <Button
-                  key={mode.id}
-                  variant={isActive ? "secondary" : "ghost"}
-                  onClick={() => onModeChange(mode.id)}
-                  className={cn(
-                    "w-full justify-start gap-2 h-8",
-                    isActive && "bg-muted"
-                  )}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  {!collapsed && <span className="truncate">{mode.label}</span>}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Chat Sessions */}
         <SidebarGroup className="flex-1 overflow-hidden">
-          <SidebarGroupLabel className={cn("px-3", collapsed && "sr-only")}>
-            {modes.find(m => m.id === currentMode)?.label} Chats
+          <SidebarGroupLabel className={cn("px-3 text-muted-foreground font-medium", collapsed && "sr-only")}>
+            Recent Chats
           </SidebarGroupLabel>
           
           <SidebarGroupContent className="overflow-y-auto">

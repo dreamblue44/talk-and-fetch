@@ -33,48 +33,40 @@ export const ModeSelector = ({ currentMode, onModeChange, onSettingsClick }: Mod
   ];
 
   return (
-    <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            {modes.map((mode) => {
-              const Icon = mode.icon;
-              const isActive = currentMode === mode.id;
-              
-              return (
-                <Button
-                  key={mode.id}
-                  variant={isActive ? "default" : "outline"}
-                  onClick={() => onModeChange(mode.id)}
-                  className={cn(
-                    "transition-all duration-200",
-                    isActive 
-                      ? "bg-gradient-primary hover:opacity-90 shadow-lg" 
-                      : "hover:bg-muted border-border"
-                  )}
-                >
-                  <Icon className="w-4 h-4 mr-2" />
-                  {mode.label}
-                </Button>
-              );
-            })}
-          </div>
+    <div className="flex items-center justify-between flex-1">
+      <div className="flex gap-2">
+        {modes.map((mode) => {
+          const Icon = mode.icon;
+          const isActive = currentMode === mode.id;
           
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onSettingsClick}
-            className="hover:bg-muted border-border transition-all duration-200"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {/* Mode description */}
-        <div className="mt-3 text-sm text-muted-foreground">
-          {modes.find(mode => mode.id === currentMode)?.description}
-        </div>
+          return (
+            <Button
+              key={mode.id}
+              variant={isActive ? "default" : "outline"}
+              onClick={() => onModeChange(mode.id)}
+              className={cn(
+                "transition-all duration-200 h-9",
+                isActive 
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-md" 
+                  : "hover:bg-muted border-border"
+              )}
+              size="sm"
+            >
+              <Icon className="w-4 h-4 mr-2" />
+              {mode.label}
+            </Button>
+          );
+        })}
       </div>
+      
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onSettingsClick}
+        className="hover:bg-muted border-border transition-all duration-200"
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
     </div>
   );
 };
