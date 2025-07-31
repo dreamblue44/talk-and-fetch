@@ -3,7 +3,9 @@ import { ChatContainer } from "./ChatContainer";
 import { ChatInput } from "./ChatInput";
 import { ModeSelector, ChatMode } from "./ModeSelector";
 import { SettingsPanel } from "./SettingsPanel";
+import { AppSidebar } from "./AppSidebar";
 import { useToast } from "@/hooks/use-toast";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 interface Message {
   id: string;
@@ -12,12 +14,30 @@ interface Message {
   timestamp: Date;
 }
 
+interface ChatSession {
+  id: string;
+  name: string;
+  mode: ChatMode;
+  createdAt: Date;
+  lastMessage?: string;
+  messages: Message[];
+}
+
 export const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [currentMode, setCurrentMode] = useState<ChatMode>("database");
   const [isLoading, setIsLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
+
+  const currentChat = chatSessions.find(chat => chat.id === currentChatId);
+  const messages = currentChat?.messages || [];
+
+  const generateChatName = (firstMessage: string): string => {
+    const words = firstMessage.split(' ').slice(0, 4);
+    return words.join(' ') + (words.length === 4 && firstMessage.split(' ').length > 4 ? '...' : '');
+  };
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -48,7 +68,33 @@ export const ChatInterface = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    let targetChatId = currentChatId;
+
+    // Update or create chat session
+    if (!currentChatId) {
+      // Create new chat session
+      const newChatId = generateId();
+      targetChatId = newChatId;
+      const newSession: ChatSession = {
+        id: newChatId,
+        name: generateChatName(content),
+        mode: currentMode,
+        createdAt: new Date(),
+        lastMessage: content,
+        messages: [userMessage]
+      };
+      
+      setChatSessions(prev => [newSession, ...prev]);
+      setCurrentChatId(newChatId);
+    } else {
+      // Add to existing chat
+      setChatSessions(prev => prev.map(session => 
+        session.id === currentChatId 
+          ? { ...session, messages: [...session.messages, userMessage], lastMessage: content }
+          : session
+      ));
+    }
+
     setIsLoading(true);
 
     try {
@@ -61,7 +107,12 @@ export const ChatInterface = () => {
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      // Add assistant response to chat session
+      setChatSessions(prev => prev.map(session => 
+        session.id === targetChatId 
+          ? { ...session, messages: [...session.messages, assistantMessage] }
+          : session
+      ));
       
       toast({
         title: "Response received",
@@ -80,35 +131,80 @@ export const ChatInterface = () => {
 
   const handleModeChange = (mode: ChatMode) => {
     setCurrentMode(mode);
-    setMessages([]); // Clear previous messages when switching modes
+    setCurrentChatId(null); // Clear current chat when switching modes
     toast({
       title: "Mode changed",
       description: `Switched to ${mode} mode.`,
     });
   };
 
+  const handleNewChat = () => {
+    setCurrentChatId(null);
+    toast({
+      title: "New chat",
+      description: "Started a new conversation.",
+    });
+  };
+
+  const handleChatSelect = (chatId: string) => {
+    setCurrentChatId(chatId);
+    const selectedChat = chatSessions.find(chat => chat.id === chatId);
+    if (selectedChat && selectedChat.mode !== currentMode) {
+      setCurrentMode(selectedChat.mode);
+    }
+  };
+
+  const handleDeleteChat = (chatId: string) => {
+    setChatSessions(prev => prev.filter(chat => chat.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+    }
+    toast({
+      title: "Chat deleted",
+      description: "Chat has been removed.",
+    });
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-gradient-background">
-      <ModeSelector
-        currentMode={currentMode}
-        onModeChange={handleModeChange}
-        onSettingsClick={() => setShowSettings(true)}
-      />
-      
-      <ChatContainer
-        messages={messages}
-        isLoading={isLoading}
-      />
-      
-      <ChatInput
-        onSendMessage={handleSendMessage}
-        disabled={isLoading}
-      />
-      
-      <SettingsPanel
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gradient-background">
+        <AppSidebar
+          currentMode={currentMode}
+          currentChatId={currentChatId}
+          chatSessions={chatSessions}
+          onModeChange={handleModeChange}
+          onChatSelect={handleChatSelect}
+          onNewChat={handleNewChat}
+          onDeleteChat={handleDeleteChat}
+        />
+        
+        <main className="flex-1 flex flex-col">
+          {/* Header with trigger */}
+          <div className="h-12 flex items-center border-b border-border bg-background/95 backdrop-blur">
+            <SidebarTrigger className="ml-2" />
+            <div className="ml-4">
+              <h1 className="text-lg font-medium">
+                {currentChat?.name || `${currentMode.charAt(0).toUpperCase() + currentMode.slice(1)} Chat`}
+              </h1>
+            </div>
+          </div>
+          
+          <ChatContainer
+            messages={messages}
+            isLoading={isLoading}
+          />
+          
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={isLoading}
+          />
+          
+          <SettingsPanel
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+          />
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
