@@ -80,6 +80,7 @@ export const ChatInterface = () => {
 
   const handleModeChange = (mode: ChatMode) => {
     setCurrentMode(mode);
+    setMessages([]); // Clear previous messages when switching modes
     toast({
       title: "Mode changed",
       description: `Switched to ${mode} mode.`,
